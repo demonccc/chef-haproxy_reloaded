@@ -3,6 +3,10 @@ haproxy_reloaded CHANGELOG
 
 This file is used to list changes made in each version of the haproxy_reloaded cookbook.
 
+0.7.3
+-----
+- [Claudio Cesar Sanchez Tejeda] - Added the posibility to disable listen, backend or frontend sections set in roles
+
 0.7.2
 -----
 - [Claudio Cesar Sanchez Tejeda] - A lot of changes...

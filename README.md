@@ -409,6 +409,7 @@ Putting all toghether, the following settings:
 }
 ```
 will generate the following configuration file:
+
 ```
 global
         ca-base /etc/ssl/certs

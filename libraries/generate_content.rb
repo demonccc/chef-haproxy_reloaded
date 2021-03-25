@@ -50,7 +50,7 @@ def parse_servers_hash(servers)
 
     pool_servers.map! do |server|
       server_ip = begin
-        if server.attribute?('cloud')
+        if server['cloud']
           if node.attribute?('cloud') && (server['cloud']['provider'] == node['cloud']['provider'])
             server['cloud']['local_ipv4']
           else

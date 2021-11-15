@@ -123,6 +123,7 @@ You can disable listen, frontend or backend sections configured in other roles b
 The special attribute ```[member_options]``` is an hash that set rules to search the servers and the configurations to be applied them by setting the following attributes:
 
 - ```[member_options]['search']```: You need to define the Chef search string in order to obtain the nodes IP that will be used in the Haproxy server parameters
+- ```[member_options]['search_extra_environments']```: You can extend the search query to other chef environments than the node's one. This can be useful when you have multiple clusters for the same environment. (Default is `nil`)
 - ```[member_options]['port']```:  You should set the port where is running the nodes service that will be managed by Haproxy
 - ```[member_options]['options']```: This attribute should contain all the options that you need to set to the servers
 
@@ -526,6 +527,28 @@ listen health
         mode health
         option tcplog
 ```
+
+In any cases, this cookbook will scope the `search` with the node's chef
+environment, but you can enlarge the search scope by adding more chef 
+environments in the `search_extra_environments` attribute:
+
+```json
+"haproxy": {
+  "backend": {
+    "webstomp": {
+      "servers": {
+        "search": "policy_name:k8smaster",
+        "search_extra_environments": ["staging-west"]
+      }
+    }
+  }
+}
+```
+
+In the bellow example all the nodes having the `policy_name` being `k8smaster`
+and being part of the node's `chef_environment` (`staging-east` for example) 
+**AND** the nodes from the `staging-west` `chef_environment` will be included in
+the HAproxy configuration.
 
 Development
 -----------

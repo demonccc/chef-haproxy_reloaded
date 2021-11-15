@@ -44,7 +44,15 @@ def parse_servers_hash(servers)
   end
 
   unless servers['search'].nil?
-    pool_servers = search("node", "#{servers['search']} AND chef_environment:#{node.chef_environment}") || []
+    chef_environments = "chef_environment:#{node.chef_environment}"
+
+    unless servers['search_extra_environments'].nil?
+      servers['search_extra_environments'].map do |extra_env|
+        chef_environments += " OR chef_environment:#{extra_env}"
+      end
+    end
+
+    pool_servers = search('node', "#{servers['search']} AND (#{chef_environments})") || []
 
     pool_servers = pool_servers.sort { |a,b| a[:hostname] <=> b[:hostname] }
 

@@ -56,6 +56,9 @@ default['haproxy']['backend'] = {}
 #    },
 #    'member_options' => {
 #      'search' => 'role:webserver',
+#      'search_extra_environments' => [
+#        'another-environment-name'
+#      ],
 #      'port' => "80",
 #      'options' => "cookie #{server['hostname']} check port 80"
 #    }

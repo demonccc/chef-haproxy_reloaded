@@ -32,8 +32,8 @@ def parse_value(value, server={})
 end
 
 def parse_servers_hash(servers)
-  output = ""
-  server_options = ""
+  output = ''
+  server_options = ''
   server_options = ":#{servers['port']}" unless servers['port'].nil?
   server_options += " #{servers['options']}" unless servers['options'].nil?
 
@@ -44,6 +44,12 @@ def parse_servers_hash(servers)
   end
 
   unless servers['search'].nil?
+    if servers['search_extra_environments'] && servers['search_environments']
+      Chef::Log.fatal 'Configuration with both search_extra_environments AND ' \
+                      'search_environments is not supported.'
+      raise
+    end
+
     chef_environments = "chef_environment:#{node.chef_environment}"
 
     unless servers['search_extra_environments'].nil?
@@ -52,12 +58,20 @@ def parse_servers_hash(servers)
       end
     end
 
+    unless servers['search_environments'].nil?
+      chef_environments = ''
+
+      servers['search_environments'].map do |extra_env|
+        chef_environments += " OR chef_environment:#{extra_env}"
+      end
+    end
+
     pool_servers = search('node', "#{servers['search']} AND (#{chef_environments})") || []
 
-    pool_servers = pool_servers.sort { |a,b| a[:hostname] <=> b[:hostname] }
+    pool_servers = pool_servers.sort { |a, b| a[:hostname] <=> b[:hostname] }
 
     pool_servers.map! do |server|
-      server_ip = begin
+      begin
         if server['cloud']
           if node['cloud'] && (server['cloud']['provider'] == node['cloud']['provider'])
             server['cloud']['local_ipv4']
@@ -71,5 +85,6 @@ def parse_servers_hash(servers)
       output += "        server  #{server['hostname']} #{server['ipaddress']}#{parse_value(server_options, server)}\n"
     end
   end
-  return output
+
+  output
 end

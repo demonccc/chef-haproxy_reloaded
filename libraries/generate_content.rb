@@ -61,10 +61,14 @@ def parse_servers_hash(servers)
     unless servers['search_environments'].nil?
       chef_environments = ''
 
-      servers['search_environments'].map do |extra_env|
-        chef_environments += " OR chef_environment:#{extra_env}"
+      servers['search_environments'].each_with_index do |extra_env, index|
+        chef_environments += "chef_environment:#{extra_env}"
+
+        chef_environments += ' OR ' if index < servers['search_environments'].size
       end
     end
+
+    Chef::Log.info "\n  )-----> chef_environments: #{chef_environments.inspect}"
 
     pool_servers = search('node', "#{servers['search']} AND (#{chef_environments})") || []
 

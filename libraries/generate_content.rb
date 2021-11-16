@@ -64,7 +64,8 @@ def parse_servers_hash(servers)
       servers['search_environments'].each_with_index do |extra_env, index|
         chef_environments += "chef_environment:#{extra_env}"
 
-        chef_environments += ' OR ' if index < servers['search_environments'].size
+        index < (servers['search_environments'].size - 1) &&
+          chef_environments += ' OR '
       end
     end
 

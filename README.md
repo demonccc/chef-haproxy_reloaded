@@ -1,33 +1,28 @@
-haproxy_reloaded Cookbook
-===========================
+# haproxy_reloaded Cookbook
 
-Description
------------
+## Description
 
 This cookbook installs, configures and manages Haproxy.
 
-Requirements
-------------
+## Requirements
 
-#### Chef
+### Chef
 Tested on 11.12.8 but newer and older version should work just fine.
 
-#### Platform
+### Platform
 The following platforms have been tested with this cookbook, meaning that the recipes run on these platforms without error:
 - `Ubuntu`
 - `Debian`
 
-#### Cookbooks
+### Cookbooks
 
 There are **no** external cookbook dependencies.
 
-Capabilities
-------------
+## Capabilities
 
-Attributes
-----------
+## Attributes
 
-#### haproxy_reloaded::default
+### haproxy_reloaded::default
 <table>
   <tr>
     <th>Key</th>
@@ -81,25 +76,21 @@ Attributes
 
 For more details, see the `attributes/default.rb` file.
 
-Recipes
--------
+## Recipes
 
 ### haproxy_reloaded::default
 This recipe installs and configures Haproxy in the node.
 
-Resources and Providers
------------------------
+## Resources and Providers
 
 There are **none** defined.
 
-Libraries
----------
+## Libraries
 
 ### haproxy_reloaded::generate_content
 This library contains the functions that parse the node attributes and generate the haproxy configuration file.
 
-Usage
------
+## Usage
 
 Just include `haproxy_reloaded` in your node's `run_list`:
 
@@ -123,6 +114,8 @@ You can disable listen, frontend or backend sections configured in other roles b
 The special attribute ```[member_options]``` is an hash that set rules to search the servers and the configurations to be applied them by setting the following attributes:
 
 - ```[member_options]['search']```: You need to define the Chef search string in order to obtain the nodes IP that will be used in the Haproxy server parameters
+- ```[member_options]['search_extra_environments']```: You can extend the search query to other chef environments than the node's one. This allows you to send the same trafic to multiple clusters. (Default is `nil`)
+- ```[member_options]['search_environments']```: You can also completely replace the chef environments used to search for the nodes. This allows you to send different trafics to different clusters. (Default is `nil`)
 - ```[member_options]['port']```:  You should set the port where is running the nodes service that will be managed by Haproxy
 - ```[member_options]['options']```: This attribute should contain all the options that you need to set to the servers
 
@@ -527,8 +520,70 @@ listen health
         option tcplog
 ```
 
-Development
------------
+### Forwarding the same trafic to multiple clusters
+
+By default this cookbook will scope the `search` with the node's chef
+environment, but you can enlarge the search scope by adding more chef 
+environments in the `search_extra_environments` attribute:
+
+```json
+"haproxy": {
+  "frontend": {
+    "http": {
+      "bind": "*:80",
+      "default_backend": "webstomp"
+    }
+  },
+  "backend": {
+    "webstomp": {
+      "servers": {
+        "search": "policy_name:k8sworker",
+        "search_extra_environments": ["staging-west"]
+      }
+    }
+  }
+}
+```
+
+Let's suppose that the trafic for `a.example.com` and `b.example.com` is coming
+to the load balancer port 80, both will be forwarded to the servers from the
+`webstomp` backend.
+
+### Forwarding different trafics to different clusters
+
+But you can also completely replace the chef environments used in the search 
+query in order to *split* the trafic:
+
+```json
+"haproxy": {
+  "frontend": {
+    "http": {
+      "bind": "*:80",
+      "use_backend": "%[req.hdr(host),lower,word(1,:)]"
+    }
+  },
+  "backend": {
+    "a.example.com": {
+      "servers": {
+        "search": "policy_name:k8sworker",
+        "search_environments": ["staging-app-a"]
+      }
+    },
+    "b.example.com": {
+      "servers": {
+        "search": "policy_name:k8sworker",
+        "search_environments": ["staging-app-b"]
+      }
+    }
+  }
+```
+
+Here the trafic to `a.example.com` will be forwarded to the nodes from the
+`staging-app-a` chef environment (or policy group), while the trafic to 
+`b.example.com` will be forwarded to the nodes from the `staging-app-b` chef 
+environment (or policy group).
+
+## Development
 
 - Source hosted at [GitHub][repo]
 - Report issues/Questions/Feature requests on [GitHub Issues][issues]
